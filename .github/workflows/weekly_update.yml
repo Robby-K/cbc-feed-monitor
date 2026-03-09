@@ -1,0 +1,39 @@
+name: Weekly CBC Feed Monitor
+
+on:
+  schedule:
+    # 9:00 AM Toronto (ET) every Friday
+    # ET is UTC-5 (winter) / UTC-4 (summer)
+    - cron: "0 13 * * 5"  # 9am EDT (summer)
+    - cron: "0 14 * * 5"  # 9am EST (winter)
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-sheet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Snowflake query and save CSV
+        env:
+          SNOWFLAKE_PRIVATE_KEY_B64: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_B64 }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+        run: python update_sheet.py
+
+      - name: Commit and push results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/
+          git diff --cached --quiet || git commit -m "Update feed results $(date +%Y-%m-%d)"
+          git push
