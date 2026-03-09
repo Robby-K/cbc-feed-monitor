@@ -18,7 +18,7 @@
  */
 
 // UPDATE THIS with your GitHub repo's raw URL for latest.csv
-var GITHUB_CSV_URL = "https://raw.githubusercontent.com/OWNER/cbc-feed-monitor/main/results/latest.csv";
+var GITHUB_CSV_URL = "https://raw.githubusercontent.com/Robby-K/cbc-feed-monitor/main/results/latest.csv";
 
 function importLatestCSV() {
   var response = UrlFetchApp.fetch(GITHUB_CSV_URL);
