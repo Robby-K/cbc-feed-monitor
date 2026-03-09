@@ -4,52 +4,55 @@ Automated weekly Snowflake query that checks CBC live item feed status and write
 
 Runs every Friday at 9am ET via GitHub Actions.
 
+## How It Works
+
+1. **GitHub Actions** runs a Snowflake query every Friday and commits results as a CSV to this repo.
+2. **Google Apps Script** (time-triggered) fetches the CSV and creates a new tab in the Google Sheet.
+
 ## Setup
 
-### 1. Google Cloud Service Account
+### 1. GitHub Repository Secrets
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a project (or use an existing one)
-3. Enable **Google Sheets API** and **Google Drive API**
-4. Create a **Service Account** (IAM & Admin > Service Accounts)
-5. Create a JSON key for the service account and download it
-6. **Share the Google Sheet** with the service account email (e.g. `name@project.iam.gserviceaccount.com`) as **Editor**
-
-### 2. GitHub Repository Secrets
-
-Create a GitHub repo and add these secrets (Settings > Secrets > Actions):
+Add these secrets (Settings > Secrets > Actions):
 
 | Secret | Value |
 |--------|-------|
-| `SNOWFLAKE_USER` | Your Snowflake username (e.g. `robbykhoutsaysana`) |
-| `SNOWFLAKE_ACCOUNT` | `instacart-instacart` |
-| `SNOWFLAKE_WAREHOUSE` | `developer_wh` |
-| `SNOWFLAKE_ROLE` | `instacart_developer_role` |
+| `SNOWFLAKE_USER` | Your Snowflake username |
+| `SNOWFLAKE_ACCOUNT` | Your Snowflake account identifier |
+| `SNOWFLAKE_WAREHOUSE` | Your Snowflake warehouse |
+| `SNOWFLAKE_ROLE` | Your Snowflake role |
 | `SNOWFLAKE_PRIVATE_KEY_B64` | Base64-encoded RSA private key (see below) |
-| `GOOGLE_SERVICE_ACCOUNT_B64` | Base64-encoded service account JSON (see below) |
 
-#### Encoding secrets as base64
+#### Encoding the RSA key
 
 ```bash
-# Snowflake RSA key
-base64 -i ~/.ssh/rsa_key.p8 | pbcopy
-
-# Google service account JSON
-base64 -i /path/to/service-account.json | pbcopy
+base64 -i /path/to/rsa_key.p8 | pbcopy
 ```
 
 Paste the clipboard contents as the secret value.
 
+### 2. Apps Script
+
+1. Open the target Google Sheet
+2. Extensions > Apps Script
+3. Paste the code from `apps_script.js`
+4. Update `GITHUB_CSV_URL` with this repo's raw URL for `results/latest.csv`
+5. Run `test` to authorize
+6. Add a time-driven trigger for `importLatestCSV` (weekly, Friday, 9am)
+
 ### 3. Local Testing (optional)
 
 ```bash
-export SNOWFLAKE_USER="robbykhoutsaysana"
-export SNOWFLAKE_PRIVATE_KEY_PATH="$HOME/.ssh/rsa_key.p8"
-export GOOGLE_SERVICE_ACCOUNT_PATH="/path/to/service-account.json"
+export SNOWFLAKE_USER="your_username"
+export SNOWFLAKE_PRIVATE_KEY_PATH="/path/to/rsa_key.p8"
 
 pip install -r requirements.txt
 python update_sheet.py
 ```
+
+## Updating the Item List
+
+Edit `CBC_ITEM_LIST.csv` in this repo. The next scheduled run will use the updated list.
 
 ## Manual Trigger
 
