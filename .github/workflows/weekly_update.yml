@@ -8,6 +8,9 @@ on:
     - cron: "0 14 * * 5"  # 9am EST (winter)
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  contents: write
+
 jobs:
   update-sheet:
     runs-on: ubuntu-latest
